@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park_chatapp/screens/user_list_screen.dart';
 import 'package:park_chatapp/screens/chat_screen.dart'; // Added import for ChatScreen
+import 'package:park_chatapp/screens/edit_profile_screen.dart'; // Added import for EditProfileScreen
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -122,13 +123,26 @@ class _ChatListScreenState extends State<ChatListScreen>
           ),
         ),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-          //   onPressed: () {},
-          // ),
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
+            color: const Color.fromARGB(255, 213, 238, 215),
+            onSelected: (value) {
+              if (value == 'edit_profile') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                );
+              }
+            },
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit_profile',
+                    child: Text('Edit Profile'),
+                  ),
+                ],
           ),
         ],
         bottom: PreferredSize(
