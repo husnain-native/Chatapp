@@ -8,6 +8,8 @@ import 'package:park_chatapp/features/auth/presentation/widgets/app_drawer.dart'
 import 'package:park_chatapp/features/auth/presentation/widgets/society_details_section.dart';
 import 'package:park_chatapp/features/property/domain/models/property.dart';
 import 'package:park_chatapp/features/property/presentation/screens/property_explore_screen.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as ll;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
@@ -25,10 +28,11 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
         ),
-        title: Text(
-          'Park View City',
-          style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
-        ),
+        // title: Text(
+        //   'Park View City',
+        //   style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
+        // ),
+     
         actions: [
           OutlinedButton(
             onPressed: () {
@@ -62,6 +66,11 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
+               Image.asset(
+                            'assets/images/parkview.png',
+                            width: 500.w,
+                            height: 60.h,
+                          ),
             // Welcome Banner
             SizedBox(height: 24.h),
 
@@ -129,6 +138,43 @@ class HomeScreen extends StatelessWidget {
             SocietyDetailsSection.sample(),
 
             SizedBox(height: 24.h),
+            SizedBox(height: 24.h),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _sectionHeader('Location', Icons.location_on_outlined),
+            ),
+            SizedBox(height: 12.h),
+            SizedBox(
+              height: 220,
+              child: FlutterMap(
+                options: const MapOptions(
+                  initialCenter: ll.LatLng(33.7178631, 73.2152564),
+                  initialZoom: 14,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.park_chatapp',
+                  ),
+                  const MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: ll.LatLng(33.7178631, 73.2152564),
+                        width: 40,
+                        height: 40,
+                        child: Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 36,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 100.h),
           ],
         ),
       ),

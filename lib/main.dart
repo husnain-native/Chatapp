@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/features/auth/presentation/screens/home_screen.dart';
+import 'package:park_chatapp/features/auth/presentation/screens/signup_screen.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/create_group_screen.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/group_chat_screen.dart';
 import 'package:park_chatapp/features/chat/domain/models/group.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child: HomeScreen(), // Your login screen
+      child: SignUpScreen(), // Start with signup screen
     );
   }
 }

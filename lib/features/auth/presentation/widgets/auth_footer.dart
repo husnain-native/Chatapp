@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
 
@@ -20,7 +21,13 @@ class AuthFooter extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(text, style: AppTextStyles.bodyMedium),
+        Text(
+          text,
+          style: AppTextStyles.bodyMedium.copyWith(
+            fontSize: 11.sp,
+            color: AppColors.grey,
+          ),
+        ),
         const SizedBox(width: 4),
         GestureDetector(
           onTap: onActionPressed,
@@ -28,7 +35,8 @@ class AuthFooter extends StatelessWidget {
             actionText,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.primaryRed,
-              fontWeight: FontWeight.bold,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

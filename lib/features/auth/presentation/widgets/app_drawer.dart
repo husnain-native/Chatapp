@@ -5,6 +5,11 @@ import 'package:park_chatapp/constants/app_text_styles.dart';
 import 'package:park_chatapp/features/auth/presentation/screens/payments_screen.dart';
 import 'package:park_chatapp/features/marketplace/presentation/screens/favorites_screen.dart';
 import 'package:park_chatapp/features/property/presentation/screens/property_explore_screen.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:park_chatapp/features/security/presentation/screens/security_screen.dart';
+import 'package:park_chatapp/features/complaints/presentation/screens/complaints_screen.dart';
+import 'package:park_chatapp/features/lost_found/presentation/screens/lost_found_screen.dart';
+import 'package:park_chatapp/features/marketplace/presentation/screens/marketplace_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -32,13 +37,91 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _drawerTile(
                     context,
-                    icon: Icons.payment_outlined,
+                    icon: Icons.explore,
+                    label: 'Explore Properties',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PropertyExploreScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.chat,
+                    label: 'Chat',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ChatListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.payment,
                     label: 'Payments',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const PaymentsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.security,
+                    label: 'Security',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SecurityScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.feedback,
+                    label: 'Complaints',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ComplaintsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.find_in_page,
+                    label: 'Lost & Found',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LostFoundScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.shopping_cart,
+                    label: 'Marketplace',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MarketplaceScreen(),
                         ),
                       );
                     },
@@ -54,28 +137,6 @@ class AppDrawer extends StatelessWidget {
                           builder: (_) => const FavoritesScreen(),
                         ),
                       );
-                    },
-                  ),
-                  _drawerTile(
-                    context,
-                    icon: Icons.explore,
-                    label: 'Explore Properties',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const PropertyExploreScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _drawerTile(
-                    context,
-                    icon: Icons.notifications_outlined,
-                    label: 'Notifications',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showSnack(context, 'Notifications coming soon');
                     },
                   ),
                   const Divider(color: Colors.white24),
@@ -157,7 +218,7 @@ class AppDrawer extends StatelessWidget {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Logout'),
+            title: Text('Logout'),
             content: const Text('Are you sure you want to log out?'),
             actions: [
               TextButton(
