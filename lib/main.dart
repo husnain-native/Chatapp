@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'screens/signup_screen.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:park_chatapp/features/auth/presentation/screens/home_screen.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/create_group_screen.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/group_chat_screen.dart';
+import 'package:park_chatapp/features/chat/domain/models/group.dart';
+// import 'package:park_chatapp/features/auth/presentation/screens/login_screen.dart';
+// import 'package:park_chatapp/view/auth/signup_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+void main() {
   runApp(const MyApp());
 }
 
@@ -13,33 +16,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const FirebaseInitScreen(),
-    );
-  }
-}
-
-class FirebaseInitScreen extends StatelessWidget {
-  const FirebaseInitScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return const SignUpScreen();
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error initializing Firebase'));
-        }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return ScreenUtilInit(
+      designSize: const Size(
+        360,
+        690,
+      ), // Design dimensions (default is iPhone 13 size)
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (_, child) {
+        return MaterialApp(
+          title: 'Flutter Demo',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(),
+          routes: {'/create_group': (context) => const CreateGroupScreen()},
+          onGenerateRoute: (settings) {
+            if (settings.name == '/group_chat') {
+              final Group group = settings.arguments as Group;
+              return MaterialPageRoute(
+                builder: (_) => GroupChatScreen(group: group),
+              );
+            }
+            return null;
+          },
+          home: child,
+        );
       },
+      child: HomeScreen(), // Your login screen
     );
   }
 }
