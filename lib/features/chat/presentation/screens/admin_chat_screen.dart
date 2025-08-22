@@ -17,11 +17,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
   @override
   void initState() {
     super.initState();
+    // Add a welcome message from admin
     _messages.add(
       _ChatMessage(
-        text: 'Do you have any query? We are here to help',
+        text: 'Hello! Welcome to Park View City. How can I help you today?',
         isFromCurrentUser: false,
-        timestamp: DateTime.now(),
+        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
       ),
     );
   }
@@ -35,56 +36,48 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_messages.isNotEmpty) {
-          Navigator.pop(context, {
-            'lastMessageText': _messages.last.text,
-            'lastMessageTime': _messages.last.timestamp,
-          });
-        } else {
-          Navigator.pop(context, {
-            'lastMessageText': 'Do you have any query? We are here to help',
-            'lastMessageTime': DateTime.now(),
-          });
-        }
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppColors.primaryRed,
-          title: Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.primaryRed.withOpacity(0.15),
-                child: const Icon(Icons.verified_user, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Park View City',
-                style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-        body: Column(
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryRed,
+        title: Row(
           children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(12),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final _ChatMessage message = _messages[index];
-                  return _MessageBubble(message: message);
-                },
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.white.withOpacity(0.9),
+              child: const Icon(
+                Icons.admin_panel_settings,
+                color: AppColors.primaryRed,
+                size: 18,
               ),
             ),
-            const Divider(height: 1),
-            _buildInputBar(),
+            const SizedBox(width: 8),
+            Text(
+              'Admin Support',
+              style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
+            ),
           ],
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(12),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final _ChatMessage message = _messages[index];
+                return _MessageBubble(message: message);
+              },
+            ),
+          ),
+          const Divider(height: 1),
+          _buildInputBar(),
+        ],
       ),
     );
   }
@@ -110,7 +103,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                   minLines: 1,
                   maxLines: 5,
                   decoration: const InputDecoration(
-                    hintText: 'Type your message',
+                    hintText: 'Type your message...',
                     border: InputBorder.none,
                   ),
                   onSubmitted: (_) => _handleSend(),
@@ -147,7 +140,21 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
 
     _textEditingController.clear();
 
-    // Scroll to bottom after a tiny delay to ensure the new item is laid out
+    // Simulate admin response after a short delay
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _messages.add(
+            _ChatMessage(
+              text: _getAdminResponse(text),
+              isFromCurrentUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
+        });
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -157,6 +164,26 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
         );
       }
     });
+  }
+
+  String _getAdminResponse(String userMessage) {
+    final message = userMessage.toLowerCase();
+
+    if (message.contains('payment') || message.contains('bill')) {
+      return 'For payment related queries, please visit the Payments section in the app or contact our billing department at +92-300-1234567.';
+    } else if (message.contains('complaint') || message.contains('issue')) {
+      return 'I\'m sorry to hear about the issue. Please use the Complaints section to register your complaint, and we\'ll address it promptly.';
+    } else if (message.contains('security') || message.contains('emergency')) {
+      return 'For security emergencies, please call our security hotline immediately at +92-300-1234567. For non-emergency security matters, use the Security & Alerts section.';
+    } else if (message.contains('property') ||
+        message.contains('house') ||
+        message.contains('apartment')) {
+      return 'For property related queries, please check the Property section in the app or visit our sales office. You can also explore available properties in the marketplace.';
+    } else if (message.contains('hello') || message.contains('hi')) {
+      return 'Hello! How can I assist you today? You can ask me about payments, complaints, security, property, or any other community-related matters.';
+    } else {
+      return 'Thank you for your message. I\'ll forward this to the relevant department and get back to you soon. For immediate assistance, please use the appropriate sections in the app.';
+    }
   }
 }
 

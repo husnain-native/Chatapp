@@ -8,6 +8,7 @@ import 'package:park_chatapp/features/auth/presentation/widgets/app_drawer.dart'
 import 'package:park_chatapp/features/auth/presentation/widgets/society_details_section.dart';
 import 'package:park_chatapp/features/property/domain/models/property.dart';
 import 'package:park_chatapp/features/property/presentation/screens/property_explore_screen.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/admin_chat_screen.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
@@ -28,11 +29,11 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
         ),
+
         // title: Text(
         //   'Park View City',
         //   style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
         // ),
-     
         actions: [
           OutlinedButton(
             onPressed: () {
@@ -66,11 +67,11 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
-               Image.asset(
-                            'assets/images/parkview.png',
-                            width: 500.w,
-                            height: 60.h,
-                          ),
+            Image.asset(
+              'assets/images/parkview.png',
+              width: 500.w,
+              height: 60.h,
+            ),
             // Welcome Banner
             SizedBox(height: 24.h),
 
@@ -178,6 +179,11 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToAdminChat(context),
+        backgroundColor: AppColors.primaryRed,
+        child: const Icon(Icons.chat, color: Colors.white, size: 28),
+      ),
     );
   }
 
@@ -187,6 +193,12 @@ class HomeScreen extends StatelessWidget {
         builder: (_) => PropertyExploreScreen(initialCategory: category),
       ),
     );
+  }
+
+  void _navigateToAdminChat(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AdminChatScreen()));
   }
 
   Widget _sectionHeader(String title, IconData icon) {

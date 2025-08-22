@@ -82,7 +82,7 @@ class QuickActionGrid extends StatelessWidget {
   void _navigateToSecurity(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SecurityScreen()),
+      MaterialPageRoute(builder: (context) => SecurityScreen()),
     );
   }
 

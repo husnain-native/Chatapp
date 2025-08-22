@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
+import 'package:park_chatapp/core/services/auth_service.dart';
 import 'package:park_chatapp/features/auth/presentation/screens/payments_screen.dart';
 import 'package:park_chatapp/features/marketplace/presentation/screens/favorites_screen.dart';
 import 'package:park_chatapp/features/property/presentation/screens/property_explore_screen.dart';
@@ -10,9 +11,17 @@ import 'package:park_chatapp/features/security/presentation/screens/security_scr
 import 'package:park_chatapp/features/complaints/presentation/screens/complaints_screen.dart';
 import 'package:park_chatapp/features/lost_found/presentation/screens/lost_found_screen.dart';
 import 'package:park_chatapp/features/marketplace/presentation/screens/marketplace_screen.dart';
+import 'package:park_chatapp/core/widgets/auth_wrapper.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +31,7 @@ class AppDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _DrawerHeader(),
+            _DrawerHeader(authService: _authService),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -81,9 +90,7 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const SecurityScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => SecurityScreen()),
                       );
                     },
                   ),
@@ -218,33 +225,79 @@ class AppDrawer extends StatelessWidget {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: Text('Logout'),
+            title: const Text('Logout'),
             content: const Text('Are you sure you want to log out?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(foregroundColor: Colors.black),
                 child: const Text('Cancel'),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                ),
-                onPressed: () {
+              TextButton(
+                onPressed: () async {
                   Navigator.pop(ctx);
-                  Navigator.pop(context);
-                  _showSnack(context, 'Logged out');
+                  await _handleLogout(context);
                 },
+                style: TextButton.styleFrom(foregroundColor: Colors.black),
                 child: const Text('Logout'),
               ),
             ],
           ),
     );
   }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Call Firebase logout
+      await _authService.signOut();
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Navigate to root and show AuthWrapper (login)
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const AuthWrapper()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 }
 
 class _DrawerHeader extends StatelessWidget {
+  final AuthService authService;
+
+  const _DrawerHeader({required this.authService});
+
   @override
   Widget build(BuildContext context) {
+    final user = authService.currentUser;
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -278,12 +331,12 @@ class _DrawerHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  'Guest User',
+                  user?.displayName ?? 'User',
                   style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'guest@example.com',
+                  user?.email ?? 'user@example.com',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: Colors.white70,
                   ),

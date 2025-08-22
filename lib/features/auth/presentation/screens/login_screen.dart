@@ -1,28 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // Added this import
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/app_dialogs.dart';
+import '../../../../core/services/auth_service.dart';
 import '../widgets/auth_footer.dart';
 import '../widgets/social_login_button.dart';
 import 'package:park_chatapp/features/auth/presentation/screens/home_screen.dart';
 import 'package:park_chatapp/features/auth/presentation/screens/signup_screen.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   bool _rememberMe = false;
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  // Handle login with Firebase Auth
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (mounted) {
+        // Navigate to home screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) await showAppErrorDialog(context, e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Handle forgot password
+  Future<void> _handleForgotPassword() async {
+    if (_emailController.text.trim().isEmpty) {
+      await showAppInfoDialog(context, 'Please enter your email first');
+      return;
+    }
+
+    try {
+      await _authService.resetPassword(_emailController.text.trim());
+      if (mounted)
+        await showAppInfoDialog(
+          context,
+          'Password reset email sent! Check your inbox.',
+        );
+    } catch (e) {
+      if (mounted) await showAppErrorDialog(context, e.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Initialize screen util if not using ScreenUtilInit wrapper
-    // ScreenUtil.init(context, designSize: const Size(360, 800));
-
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -48,7 +106,7 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                           Image.asset(
+                          Image.asset(
                             'assets/images/parkview.png',
                             width: 400.w,
                             height: 50.h,
@@ -73,7 +131,7 @@ class LoginScreen extends StatelessWidget {
                           SizedBox(height: 16.h), // Added .h
                           CustomTextField(
                             label: 'Password',
-                            obscureText: true,
+                            obscureText: _obscurePassword,
                             controller: _passwordController,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -85,17 +143,23 @@ class LoginScreen extends StatelessWidget {
                               return null;
                             },
                             suffixIcon: IconButton(
-                              icon: const Icon(Icons.visibility_off),
-                              onPressed: () {},
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                             ),
                           ),
                           SizedBox(height: 8.h), // Added .h
                           Align(
                             alignment: Alignment.bottomRight,
                             child: GestureDetector(
-                              onTap: () {
-                                // Handle forgot password
-                              },
+                              onTap: _handleForgotPassword,
                               child: Text(
                                 'Forgot Password?',
                                 style: AppTextStyles.linkText,
@@ -105,16 +169,8 @@ class LoginScreen extends StatelessWidget {
                           SizedBox(height: 24.h), // Added .h
                           CustomButton(
                             text: 'LOGIN',
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // Navigate to home screen
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeScreen(),
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed:
+                                _isLoading ? () {} : () => _handleLogin(),
                             isLoading: _isLoading,
                           ),
                           SizedBox(height: 24.h), // Added .h
@@ -128,16 +184,48 @@ class LoginScreen extends StatelessWidget {
                           SocialLoginButton(
                             logoPath: 'assets/images/google_logo.png',
                             text: 'Google',
-                            onPressed: () {
-                              // Handle Google login
-                            },
+                            onPressed:
+                                _isLoading
+                                    ? () {}
+                                    : () async {
+                                      setState(() => _isLoading = true);
+                                      try {
+                                        final res =
+                                            await _authService
+                                                .signInWithGoogle();
+                                        if (res == null)
+                                          return; // user cancelled
+                                        if (mounted) {
+                                          Navigator.of(context).pushReplacement(
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) => const HomeScreen(),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          await showAppErrorDialog(
+                                            context,
+                                            e.toString(),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() => _isLoading = false);
+                                        }
+                                      }
+                                    },
                           ),
-                          SizedBox(height: 12.h), // Added .h
+                          SizedBox(height: 12.h),
                           SocialLoginButton(
                             logoPath: 'assets/images/facebook_logo.png',
                             text: 'Facebook',
-                            onPressed: () {
-                              // Handle Facebook login
+                            onPressed: () async {
+                              await showAppInfoDialog(
+                                context,
+                                'Facebook Sign-In coming soon!',
+                              );
                             },
                           ),
                           SizedBox(height: 24.h), // Added .h
@@ -148,7 +236,7 @@ class LoginScreen extends StatelessWidget {
                               // Navigate to signup screen
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
-                                  builder: (_) => SignUpScreen(),
+                                  builder: (_) => const SignUpScreen(),
                                 ),
                               );
                             },

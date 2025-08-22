@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:park_chatapp/features/auth/presentation/screens/home_screen.dart';
-import 'package:park_chatapp/features/auth/presentation/screens/signup_screen.dart';
+import 'package:park_chatapp/core/widgets/auth_wrapper.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/create_group_screen.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/group_chat_screen.dart';
 import 'package:park_chatapp/features/chat/domain/models/group.dart';
 // import 'package:park_chatapp/features/auth/presentation/screens/login_screen.dart';
 // import 'package:park_chatapp/view/auth/signup_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase only if not already initialized
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  } catch (e) {
+    // Firebase might already be initialized, continue
+    print('Firebase initialization: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -42,7 +54,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child: SignUpScreen(), // Start with signup screen
+      child: const AuthWrapper(), // Use auth wrapper to handle auth state
     );
   }
 }

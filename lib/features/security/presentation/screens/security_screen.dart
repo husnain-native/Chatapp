@@ -4,12 +4,26 @@ import 'package:park_chatapp/constants/app_text_styles.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'report_incident_screen.dart';
-import 'emergency_alerts_screen.dart';
+// import 'emergency_alerts_screen.dart';
 
 class SecurityScreen extends StatelessWidget {
-  const SecurityScreen({super.key});
+   SecurityScreen({super.key});
 
   static const String _securityPhoneNumber = '+923001234567';
+
+  // Inline sample alerts (previously in EmergencyAlertsScreen)
+  final List<_Alert> _inlineAlerts = <_Alert>[
+    _Alert(
+      title: 'Power outage',
+      details: 'Expected restoration in 2 hours',
+      time: DateTime(2025, 1, 1, 12, 30),
+    ),
+    _Alert(
+      title: 'Gate incident',
+      details: 'Traffic slowed near Gate 2',
+      time: DateTime(2025, 1, 1, 11, 20),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +31,7 @@ class SecurityScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Text(
-          'Security & Emergency',
+          'Security & Alerts',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
         ),
       ),
@@ -26,36 +40,46 @@ class SecurityScreen extends StatelessWidget {
         children: [
           _QuickActionsRow(
             onCall: () => _callSecurity(),
-            onPanic: () => _showPanicSheet(context),
-          ),
-          const SizedBox(height: 16),
-          _FeatureCard(
-            icon: Icons.report,
-            title: 'Report incidents or suspicious activity',
-            subtitle: 'Describe what happened and optionally add a photo',
-            actionText: 'Report',
-            onPressed: () {
+            onPanic: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ReportIncidentScreen()),
               );
             },
           ),
-          const SizedBox(height: 12),
-          _FeatureCard(
-            icon: Icons.notifications_active,
-            title: 'Emergency alerts',
-            subtitle: 'View and manage alerts from the community/security',
-            actionText: 'Open alerts',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const EmergencyAlertsScreen(),
+          const SizedBox(height: 16),
+          Text('Emergency alerts', style: AppTextStyles.bodyMediumBold),
+          const SizedBox(height: 8),
+          ..._inlineAlerts
+              .map(
+                (alert) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.notifications_active,
+                        color: Colors.red,
+                      ),
+                      title: Text(
+                        alert.title,
+                        style: AppTextStyles.bodyMediumBold,
+                      ),
+                      subtitle: Text(alert.details),
+                      trailing: Text(
+                        _formatTime(alert.time),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
+              )
+              .toList(),
         ],
       ),
     );
@@ -66,64 +90,20 @@ class SecurityScreen extends StatelessWidget {
     await launchUrl(uri);
   }
 
-  void _showPanicSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Panic button', style: AppTextStyles.headlineLarge),
-              const SizedBox(height: 8),
-              Text(
-                'Press and hold to send an immediate SOS alert to security. This will also initiate a call to the security office.',
-                style: AppTextStyles.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: GestureDetector(
-                  onLongPress: () async {
-                    Navigator.pop(ctx);
-                    await _callSecurity();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('SOS sent and calling security...'),
-                        ),
-                      );
-                    }
-                  },
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.red,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'HOLD TO SOS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Center(child: Text('Hold for 2 seconds to trigger')),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
+  String _formatTime(DateTime dt) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(dt.hour);
+    final minutes = twoDigits(dt.minute);
+    return '$hours:$minutes';
   }
+}
+
+class _Alert {
+  final String title;
+  final String details;
+  final DateTime time;
+
+  _Alert({required this.title, required this.details, required this.time});
 }
 
 class _QuickActionsRow extends StatelessWidget {
@@ -148,10 +128,10 @@ class _QuickActionsRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _ActionButton(
-            color: Colors.red,
-            icon: Icons.warning_amber_rounded,
-            title: 'Panic Button',
-            subtitle: 'Hold to send SOS',
+            color: AppColors.primaryRed,
+            icon: Icons.report,
+            title: 'Report Incident',
+            subtitle: 'Tap to report quickly',
             onPressed: onPanic,
           ),
         ),
@@ -263,7 +243,6 @@ class _FeatureCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ElevatedButton(
-                      
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryRed,
                         shape: RoundedRectangleBorder(
