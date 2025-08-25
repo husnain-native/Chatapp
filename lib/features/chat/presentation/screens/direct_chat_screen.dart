@@ -39,6 +39,7 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Row(

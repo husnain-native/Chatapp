@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
 import 'package:park_chatapp/features/chat/domain/models/group.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GroupChatScreen extends StatefulWidget {
   final Group group;
@@ -15,6 +17,7 @@ class GroupChatScreen extends StatefulWidget {
 class _GroupChatScreenState extends State<GroupChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String? _uid = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void dispose() {
@@ -26,6 +29,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Column(
@@ -52,14 +56,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     child: Text('Group info'),
                   ),
                   const PopupMenuItem(
-                    value: 'add_member',
-                    child: Text('Add member'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'rename',
-                    child: Text('Rename group'),
-                  ),
-                  const PopupMenuItem(
                     value: 'clear',
                     child: Text('Clear messages'),
                   ),
@@ -74,13 +70,90 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: widget.group.messages.length,
-              itemBuilder: (context, index) {
-                final GroupMessage message = widget.group.messages[index];
-                return _GroupMessageBubble(message: message);
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('groups')
+                      .doc(widget.group.id)
+                      .collection('messages')
+                      .orderBy('createdAt', descending: false)
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final msgs = snapshot.data!.docs;
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: msgs.length,
+                  itemBuilder: (context, index) {
+                    final m = msgs[index].data();
+                    final type = (m['type'] ?? 'message') as String;
+                    if (type == 'system') {
+                      final actorId = m['actorId'] as String?;
+                      return FutureBuilder<
+                        DocumentSnapshot<Map<String, dynamic>>
+                      >(
+                        future:
+                            actorId == null
+                                ? null
+                                : FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(actorId)
+                                    .get(),
+                        builder: (context, actorSnap) {
+                          final actorEmail =
+                              actorSnap.data?.data()?['email'] as String?;
+                          String textKey = (m['text'] ?? '') as String;
+                          String display = textKey;
+                          if (textKey == 'added_to_group') {
+                            display =
+                                '${actorEmail ?? 'Someone'} added to group';
+                          } else if (textKey == 'removed_from_group') {
+                            display =
+                                '${actorEmail ?? 'Someone'} removed from group';
+                          }
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Text(
+                                display,
+                                style: const TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    final senderId = m['senderId'] as String?;
+                    final isMe = senderId == _uid;
+                    return FutureBuilder<
+                      DocumentSnapshot<Map<String, dynamic>>
+                    >(
+                      future:
+                          senderId == null
+                              ? null
+                              : FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(senderId)
+                                  .get(),
+                      builder: (context, senderSnap) {
+                        final email =
+                            senderSnap.data?.data()?['email'] as String?;
+                        final senderLabel = isMe ? 'You' : (email ?? 'User');
+                        return _GroupBubbleFirestore(
+                          text: (m['text'] ?? '') as String,
+                          isMe: isMe,
+                          senderLabel: senderLabel,
+                        );
+                      },
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -138,12 +211,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       case 'group_info':
         _showGroupInfo();
         break;
-      case 'add_member':
-        _promptAddMember();
-        break;
-      case 'rename':
-        _promptRename();
-        break;
       case 'clear':
         setState(() => widget.group.messages.clear());
         break;
@@ -153,24 +220,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
   }
 
-  void _handleSend() {
+  void _handleSend() async {
     final String text = _controller.text.trim();
     if (text.isEmpty) return;
-    setState(() {
-      widget.group.messages.add(
-        GroupMessage(text: text, sender: 'You', timestamp: DateTime.now()),
-      );
-    });
     _controller.clear();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 80,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.group.id)
+        .collection('messages')
+        .add({
+          'text': text,
+          'senderId': _uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': 'message',
+        });
   }
 
   void _showGroupInfo() {
@@ -343,5 +406,66 @@ class _GroupMessageBubble extends StatelessWidget {
     final hours = twoDigits(dt.hour);
     final minutes = twoDigits(dt.minute);
     return '$hours:$minutes';
+  }
+}
+
+class _GroupBubbleFirestore extends StatelessWidget {
+  final String text;
+  final bool isMe;
+  final String senderLabel;
+
+  const _GroupBubbleFirestore({
+    required this.text,
+    required this.isMe,
+    required this.senderLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bubbleColor =
+        isMe ? AppColors.primaryRed : Colors.grey.shade200;
+    final Color textColor = isMe ? Colors.white : Colors.black87;
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.only(
+          top: 6,
+          bottom: 6,
+          left: isMe ? 60 : 12,
+          right: isMe ? 12 : 60,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: bubbleColor,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isMe ? 16 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 16),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMe)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2.0),
+                child: Text(
+                  senderLabel,
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ),
+            Text(text, style: TextStyle(color: textColor)),
+          ],
+        ),
+      ),
+    );
   }
 }

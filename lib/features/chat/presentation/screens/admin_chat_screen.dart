@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
+import 'package:park_chatapp/core/services/chat_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminChatScreen extends StatefulWidget {
   const AdminChatScreen({super.key});
@@ -10,21 +12,19 @@ class AdminChatScreen extends StatefulWidget {
 }
 
 class _AdminChatScreenState extends State<AdminChatScreen> {
-  final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String? _threadId;
 
   @override
   void initState() {
     super.initState();
-    // Add a welcome message from admin
-    _messages.add(
-      _ChatMessage(
-        text: 'Hello! Welcome to Park View City. How can I help you today?',
-        isFromCurrentUser: false,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
-      ),
-    );
+    _ensureThread();
+  }
+
+  Future<void> _ensureThread() async {
+    final id = await AppChatService.createOrGetDmThreadWithAdmin();
+    if (mounted) setState(() => _threadId = id);
   }
 
   @override
@@ -37,9 +37,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Row(
+          
           children: [
             CircleAvatar(
               radius: 16,
@@ -65,15 +67,41 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final _ChatMessage message = _messages[index];
-                return _MessageBubble(message: message);
-              },
-            ),
+            child:
+                _threadId == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: AppChatService.streamThreadMessages(_threadId!),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final msgs = snapshot.data!.docs;
+                        return ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.all(12),
+                          itemCount: msgs.length,
+                          itemBuilder: (context, index) {
+                            final m = msgs[index].data();
+                            final isMe =
+                                m['senderId'] == AppChatService.currentUid;
+                            return _MessageBubble(
+                              message: _ChatMessage(
+                                text: (m['text'] ?? '') as String,
+                                isFromCurrentUser: isMe,
+                                timestamp: DateTime.fromMillisecondsSinceEpoch(
+                                  ((m['createdAt'] as Timestamp?)
+                                          ?.millisecondsSinceEpoch ??
+                                      DateTime.now().millisecondsSinceEpoch),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
           ),
           const Divider(height: 1),
           _buildInputBar(),
@@ -124,36 +152,15 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     );
   }
 
-  void _handleSend() {
+  Future<void> _handleSend() async {
     final String text = _textEditingController.text.trim();
     if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(
-        _ChatMessage(
-          text: text,
-          isFromCurrentUser: true,
-          timestamp: DateTime.now(),
-        ),
-      );
-    });
-
     _textEditingController.clear();
 
-    // Simulate admin response after a short delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(
-            _ChatMessage(
-              text: _getAdminResponse(text),
-              isFromCurrentUser: false,
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-      }
-    });
+    if (_threadId == null) await _ensureThread();
+    if (_threadId != null) {
+      await AppChatService.sendMessageToThread(_threadId!, text);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {

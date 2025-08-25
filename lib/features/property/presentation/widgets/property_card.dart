@@ -22,6 +22,7 @@ class PropertyCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12.r),
       child: Card(
+        color: AppColors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.r)),
         child: Column(

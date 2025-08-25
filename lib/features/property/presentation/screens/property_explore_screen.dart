@@ -283,6 +283,7 @@ class _PropertyExploreScreenState extends State<PropertyExploreScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:  AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Text(
@@ -566,7 +567,7 @@ class _PropertyExploreScreenState extends State<PropertyExploreScreen>
                 decoration: InputDecoration(
                   hintText: 'Min',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12.w,

@@ -54,6 +54,7 @@ class _LostFoundScreenState extends State<LostFoundScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.primaryRed,
         title: Text(

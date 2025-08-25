@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/core/widgets/auth_wrapper.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/create_group_screen.dart';
@@ -14,7 +15,9 @@ void main() async {
   // Initialize Firebase only if not already initialized
   try {
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
     }
   } catch (e) {
     // Firebase might already be initialized, continue

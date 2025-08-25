@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/constants/app_colors.dart';
 import 'package:park_chatapp/constants/app_text_styles.dart';
 import 'package:park_chatapp/features/marketplace/domain/models/listing.dart';
@@ -21,6 +22,7 @@ class ListingCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Card(
+        color: AppColors.white,
         margin: const EdgeInsets.only(bottom: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Row(
@@ -33,21 +35,27 @@ class ListingCard extends StatelessWidget {
   Widget _buildThumbnail() {
     final String? url =
         listing.imageUrls.isNotEmpty ? listing.imageUrls.first : null;
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(12),
-        bottomLeft: Radius.circular(12),
-      ),
-      child: Container(
-        color: Colors.grey.shade200,
-        height: 90,
-        width: 110,
-        child: _buildImage(url),
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: ClipRRect(
+        // padding: REdgeInsets.only(left: 12),
+        // margin:  EdgeInsets.only(right: 12),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(7),
+          bottomLeft: Radius.circular(7),
+        ),
+        child: Container(
+          color: Colors.grey.shade200,
+          height: 90,
+          width: 110,
+          child: _buildImage(url),
+        ),
       ),
     );
   }
 
   Widget _buildInfo() {
+    
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
