@@ -332,7 +332,7 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
       builder: (context, userSnapshot) {
         String name = 'User';
         if (userSnapshot.hasData) {
-          name = userSnapshot.data?.data()?['name'] ?? 'User';
+          name = userSnapshot.data?.data()?['name'] ?? 'Agent';
         }
         return _GroupTile(
           group: Group(id: t.id, name: name, members: participants, isAuthor: false),

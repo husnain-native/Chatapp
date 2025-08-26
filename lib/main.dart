@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/direct_chat_screen.dart';
 import 'firebase_options.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:park_chatapp/core/widgets/auth_wrapper.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/create_group_screen.dart';
 import 'package:park_chatapp/features/chat/presentation/screens/group_chat_screen.dart';
+import 'package:park_chatapp/features/chat/presentation/screens/direct_chat_screen.dart';
 import 'package:park_chatapp/features/chat/domain/models/group.dart';
 // import 'package:park_chatapp/features/auth/presentation/screens/login_screen.dart';
 // import 'package:park_chatapp/view/auth/signup_screen.dart';
@@ -52,6 +54,14 @@ class MyApp extends StatelessWidget {
                 builder: (_) => GroupChatScreen(group: group),
               );
             }
+            if (settings.name == '/chat') {
+    final Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
+    final String threadId = args['threadId'] as String;
+    final String sellerName = args['sellerName'] as String;
+    return MaterialPageRoute(
+      builder: (_) => DirectChatScreen( sellerName: sellerName),
+    );
+  }
             return null;
           },
           home: child,

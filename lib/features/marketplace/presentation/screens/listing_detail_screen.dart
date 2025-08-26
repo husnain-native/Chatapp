@@ -20,7 +20,7 @@ class ListingDetailScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        top: false,
+        // top: false,
         child: ListView(
           children: [
             _imageGallery(listing.imageUrls),
@@ -59,11 +59,7 @@ class ListingDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.place,
-                        size: 18,
-                        color: AppColors.primaryRed,
-                      ),
+                      const Icon(Icons.place, size: 18, color: AppColors.primaryRed,),
                       const SizedBox(width: 6),
                       Expanded(child: Text(listing.location)),
                     ],
@@ -71,11 +67,7 @@ class ListingDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.person_outline,
-                        size: 18,
-                        color: AppColors.primaryRed,
-                      ),
+                      const Icon(Icons.person_outline, size: 18, color: AppColors.primaryRed, ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

@@ -198,13 +198,14 @@ class _MessageBubble extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               message.text,
               style: AppTextStyles.bodyMedium.copyWith(color: textColor),
             ),
-            const SizedBox(height: 4),
+            // const SizedBox(height: 4),
+            // Spacer(),
             Text(
               _formatTime(message.timestamp),
               style: TextStyle(
