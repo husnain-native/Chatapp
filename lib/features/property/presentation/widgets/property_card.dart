@@ -67,19 +67,6 @@ class PropertyCard extends StatelessWidget {
                     : Icon(Icons.home, size: 48, color: Colors.grey),
           ),
         ),
-
-        // Positioned(
-        //   top: 8.h,
-        //   right: 8.w,
-        //   child: IconButton(
-        //     onPressed: onFavorite,
-        //     icon: const Icon(Icons.favorite_border, color: Colors.white, size: 10,),
-        //     style: IconButton.styleFrom(
-        //       backgroundColor: Colors.black.withOpacity(0.5),
-        //       padding: EdgeInsets.all(2.w),
-        //     ),
-        //   ),
-        // ),
         Positioned(
           bottom: 8.h,
           left: 8.w,
