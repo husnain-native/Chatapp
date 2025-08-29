@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,16 +27,16 @@ class AuthService {
       // Create user document in Firestore
       final user = userCredential.user;
       if (user != null) {
-        final firestore = FirebaseFirestore.instance;
-        await firestore.collection('users').doc(user.uid).set({
+        final databaseRef = FirebaseDatabase.instance.ref();
+        await databaseRef.child('users/${user.uid}').set({
           'email': user.email,
           'displayName': name,
           'emailVerified': user.emailVerified,
-          'createdAt': FieldValue.serverTimestamp(),
-          'lastSignInTime': FieldValue.serverTimestamp(),
+          'createdAt': ServerValue.timestamp,
+          'lastSignInTime': ServerValue.timestamp,
           'photoURL': user.photoURL,
           'isActive': true,
-        }, SetOptions(merge: true));
+        },);
       }
 
       return userCredential;
@@ -50,10 +51,21 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Optional: Update last sign-in time in Realtime Database
+      final user = userCredential.user;
+      if (user != null) {
+        final userRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+        await userRef.update({
+          'lastSignInTime': ServerValue.timestamp,
+        });
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }

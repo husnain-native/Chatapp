@@ -4,6 +4,7 @@ import 'package:park_chatapp/constants/app_text_styles.dart';
 import 'package:park_chatapp/features/chat/domain/models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class GroupChatScreen extends StatefulWidget {
   final Group group;

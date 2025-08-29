@@ -3,6 +3,7 @@
     <application
         android:label="park_chatapp"
         android:name="${applicationName}"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_ANDROID_MAPS_API_KEY" />
         <activity

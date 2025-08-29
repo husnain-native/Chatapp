@@ -156,7 +156,7 @@ class HomeScreen extends StatelessWidget {
                   TileLayer(
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.park_chatapp',
+                    userAgentPackageName: 'com.example.parkchatapp2',
                   ),
                   const MarkerLayer(
                     markers: [

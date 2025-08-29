@@ -1,50 +1,42 @@
 {
   "project_info": {
-    "project_number": "328378561920",
-    "firebase_url": "https://chatapp-bb0e2-default-rtdb.firebaseio.com",
-    "project_id": "chatapp-bb0e2",
-    "storage_bucket": "chatapp-bb0e2.firebasestorage.app"
+    "project_number": "197051212886",
+    "project_id": "park-view-city-19b3e",
+    "storage_bucket": "park-view-city-19b3e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:328378561920:android:7708d9859b1e1af8007d65",
+        "mobilesdk_app_id": "1:197051212886:android:f37e5da74756b7450587f7",
         "android_client_info": {
-          "package_name": "com.example.park_chatapp"
+          "package_name": "com.example.parkchatapp2"
         }
       },
       "oauth_client": [
         {
-          "client_id": "328378561920-m832e1k0uqbjrke2pihji2udpuskarjl.apps.googleusercontent.com",
+          "client_id": "197051212886-eel0qf0mk5ni9pdio04qnth49qvp47fo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.park_chatapp",
+            "package_name": "com.example.parkchatapp2",
             "certificate_hash": "e10c81cc1e809f7a4d178405f94641e07b7f4845"
           }
         },
         {
-          "client_id": "328378561920-6ktlqk25jl7lr19hboesrbnpj82j1hrn.apps.googleusercontent.com",
+          "client_id": "197051212886-uga3bccr82ofdva5foauu50a7la12ev1.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDQEXanG6979_XDSccxm2RmATDu7hIo8dg"
+          "current_key": "AIzaSyD04dvZUdrD6jjT11g6fF7G1UI1_8EoTyE"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "328378561920-6ktlqk25jl7lr19hboesrbnpj82j1hrn.apps.googleusercontent.com",
+              "client_id": "197051212886-uga3bccr82ofdva5foauu50a7la12ev1.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "328378561920-g4ihbb9ij3m4dujqjg7fnvj9jne92m8b.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.parkChatapp"
-              }
             }
           ]
         }
