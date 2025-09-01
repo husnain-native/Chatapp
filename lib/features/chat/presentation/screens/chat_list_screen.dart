@@ -15,8 +15,8 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProviderStateMixin {
-  String _lastMessage = 'Do you have any query? We are here to help';
-  DateTime _lastMessageTime = DateTime.now();
+  final String _lastMessage = 'Do you have any query? We are here to help';
+  final DateTime _lastMessageTime = DateTime.now();
   final String? _uid = FirebaseAuth.instance.currentUser?.uid;
   late TabController _tabController;
 
@@ -99,164 +99,281 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildAllTab() {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('threads')
-          .where('isGroup', isEqualTo: false)
-          .where('participants', arrayContains: _uid)
-          .snapshots(),
-      builder: (context, dmSnapshot) {
-        if (dmSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+Widget _buildAllTab() {
+  final threadsRef = FirebaseDatabase.instance.ref("threads");
+  final groupsRef = FirebaseDatabase.instance.ref("groups");
+
+  return StreamBuilder<DatabaseEvent>(
+    stream: threadsRef.orderByChild("isGroup").equalTo(false).onValue,
+    builder: (context, dmSnapshot) {
+      if (dmSnapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final dmValue = dmSnapshot.data?.snapshot.value;
+      final dmData = dmValue is Map<dynamic, dynamic> ? dmValue : <dynamic, dynamic>{};
+      final dmThreads = <Map<String, dynamic>>[];
+
+      dmData.forEach((key, value) {
+        if (value is Map<dynamic, dynamic>) {
+          final thread = Map<String, dynamic>.from(value);
+          final participants = thread["participants"];
+          List<String> participantList = [];
+          if (participants is Map<dynamic, dynamic>) {
+            participantList = participants.keys.map((e) => e.toString()).toList();
+          } else if (participants is List) {
+            participantList = participants.map((e) => e.toString()).toList();
+          }
+          if (participantList.contains(_uid)) {
+            dmThreads.add({"id": key, ...thread});
+          }
         }
-        final dmThreads = dmSnapshot.data?.docs ?? const [];
+      });
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('groups')
-              .where('members', arrayContains: _uid)
-              .snapshots(),
-          builder: (context, groupsSnapshot) {
-            if (groupsSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+      return StreamBuilder<DatabaseEvent>(
+        stream: groupsRef.onValue,
+        builder: (context, groupsSnapshot) {
+          if (groupsSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final groupsValue = groupsSnapshot.data?.snapshot.value;
+          final groupsData = groupsValue is Map<dynamic, dynamic> ? groupsValue : <dynamic, dynamic>{};
+          final groups = <Map<String, dynamic>>[];
+
+          groupsData.forEach((key, value) {
+            if (value is Map<dynamic, dynamic>) {
+              final group = Map<String, dynamic>.from(value);
+              final members = group["members"];
+              List<String> memberList = [];
+              if (members is Map<dynamic, dynamic>) {
+                memberList = members.keys.map((e) => e.toString()).toList();
+              } else if (members is List) {
+                memberList = members.map((e) => e.toString()).toList();
+              }
+              if (memberList.contains(_uid)) {
+                groups.add({"id": key, ...group});
+              }
             }
-            final groups = groupsSnapshot.data?.docs ?? const [];
+          });
 
-            if (dmThreads.isEmpty && groups.isEmpty) {
-              return _buildEmptyListView();
-            }
+          if (dmThreads.isEmpty && groups.isEmpty) {
+            return _buildEmptyListView();
+          }
 
-            return ListView(
-              children: [
-                _AdminChatTile(
-                  lastMessage: _lastMessage,
-                  lastMessageTime: _lastMessageTime,
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdminChatScreen(),
-                      ),
-                    );
-                  },
+          return ListView(
+            children: [
+              _AdminChatTile(
+                lastMessage: _lastMessage,
+                lastMessageTime: _lastMessageTime,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AdminChatScreen(),
+                    ),
+                  );
+                },
+              ),
+              ...groups.map((g) => _buildGroupTile(g)),
+              ...dmThreads.map((t) => _buildDmTile(t)),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+
+Widget _buildChatsTab() {
+  final threadsRef = FirebaseDatabase.instance.ref("threads");
+
+  return StreamBuilder<DatabaseEvent>(
+    stream: threadsRef.orderByChild("isGroup").equalTo(false).onValue,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+        return _buildEmptyListView();
+      }
+
+      final value = snapshot.data!.snapshot.value;
+      final data = value is Map<dynamic, dynamic> ? value : <dynamic, dynamic>{};
+      final threads = <Map<String, dynamic>>[];
+
+      data.forEach((key, value) {
+        if (value is Map<dynamic, dynamic>) {
+          final thread = Map<String, dynamic>.from(value);
+          final participants = thread["participants"];
+          List<String> participantList = [];
+          if (participants is Map<dynamic, dynamic>) {
+            participantList = participants.keys.map((e) => e.toString()).toList();
+          } else if (participants is List) {
+            participantList = participants.map((e) => e.toString()).toList();
+          }
+          if (participantList.contains(_uid)) {
+            threads.add({"id": key, ...thread});
+          }
+        }
+      });
+
+      if (threads.isEmpty) {
+        return _buildEmptyListView();
+      }
+
+      return ListView(
+        children: [
+          _AdminChatTile(
+            lastMessage: _lastMessage,
+            lastMessageTime: _lastMessageTime,
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AdminChatScreen(),
                 ),
-                // const Divider(height: 0),
-                ...groups.map((g) => _buildGroupTile(g)),
-                ...dmThreads.map((t) => _buildDmTile(t)),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+              );
+            },
+          ),
+          const Divider(height: 0),
+          ...threads.map((t) => _buildDmTile(t)),
+        ],
+      );
+    },
+  );
+}
 
-  Widget _buildChatsTab() {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('threads')
-          .where('isGroup', isEqualTo: false)
-          .where('participants', arrayContains: _uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final threads = snapshot.data?.docs ?? const [];
 
-        if (threads.isEmpty) {
-          return _buildEmptyListView();
-        }
+Widget _buildUnreadTab() {
+  final threadsRef = FirebaseDatabase.instance.ref("threads");
+  final groupsRef = FirebaseDatabase.instance.ref("groups");
 
-        return ListView(
-          children: [
-            _AdminChatTile(
-              lastMessage: _lastMessage,
-              lastMessageTime: _lastMessageTime,
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminChatScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 0),
-            ...threads.map((t) => _buildDmTile(t)),
-          ],
-        );
-      },
-    );
-  }
+  return StreamBuilder<DatabaseEvent>(
+    stream: threadsRef.orderByChild("isGroup").equalTo(false).onValue,
+    builder: (context, dmSnapshot) {
+      if (dmSnapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-  Widget _buildUnreadTab() {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('threads')
-          .where('isGroup', isEqualTo: false)
-          .where('participants', arrayContains: _uid)
-          .where('unreadCount', isGreaterThan: 0)
-          .snapshots(),
-      builder: (context, dmSnapshot) {
-        if (dmSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final dmThreads = dmSnapshot.data?.docs ?? const [];
+      final dmThreads = <Map<String, dynamic>>[];
+      if (dmSnapshot.hasData && dmSnapshot.data!.snapshot.value != null) {
+        final dmValue = dmSnapshot.data!.snapshot.value;
+        final data = dmValue is Map<dynamic, dynamic> ? dmValue : <dynamic, dynamic>{};
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('groups')
-              .where('members', arrayContains: _uid)
-              .where('unreadCount', isGreaterThan: 0)
-              .snapshots(),
-          builder: (context, groupsSnapshot) {
-            if (groupsSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+        data.forEach((key, value) {
+          if (value is Map<dynamic, dynamic>) {
+            final thread = Map<String, dynamic>.from(value);
+            final participants = thread["participants"];
+            List<String> participantList = [];
+            if (participants is Map<dynamic, dynamic>) {
+              participantList = participants.keys.map((e) => e.toString()).toList();
+            } else if (participants is List) {
+              participantList = participants.map((e) => e.toString()).toList();
             }
-            final groups = groupsSnapshot.data?.docs ?? const [];
-
-            if (dmThreads.isEmpty && groups.isEmpty) {
-              return _buildEmptyListView();
+            final unreadCount = (thread["unreadCount"] ?? 0) as int;
+            if (participantList.contains(_uid) && unreadCount > 0) {
+              dmThreads.add({"id": key, ...thread});
             }
+          }
+        });
+      }
 
-            return ListView(
-              children: [
-                ...groups.map((g) => _buildGroupTile(g)),
-                ...dmThreads.map((t) => _buildDmTile(t)),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+      return StreamBuilder<DatabaseEvent>(
+        stream: groupsRef.onValue,
+        builder: (context, groupsSnapshot) {
+          if (groupsSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-  Widget _buildGroupsTab() {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('groups')
-          .where('members', arrayContains: _uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          final groups = <Map<String, dynamic>>[];
+          if (groupsSnapshot.hasData && groupsSnapshot.data!.snapshot.value != null) {
+            final groupsValue = groupsSnapshot.data!.snapshot.value;
+            final groupsData = groupsValue is Map<dynamic, dynamic> ? groupsValue : <dynamic, dynamic>{};
+
+            groupsData.forEach((key, value) {
+              if (value is Map<dynamic, dynamic>) {
+                final group = Map<String, dynamic>.from(value);
+                final members = group["members"];
+                List<String> memberList = [];
+                if (members is Map<dynamic, dynamic>) {
+                  memberList = members.keys.map((e) => e.toString()).toList();
+                } else if (members is List) {
+                  memberList = members.map((e) => e.toString()).toList();
+                }
+                final unreadCount = (group["unreadCount"] ?? 0) as int;
+                if (memberList.contains(_uid) && unreadCount > 0) {
+                  groups.add({"id": key, ...group});
+                }
+              }
+            });
+          }
+
+          if (dmThreads.isEmpty && groups.isEmpty) {
+            return _buildEmptyListView();
+          }
+
+          return ListView(
+            children: [
+              ...groups.map((g) => _buildGroupTile(g)),
+              ...dmThreads.map((t) => _buildDmTile(t)),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Widget _buildGroupsTab() {
+  final groupsRef = FirebaseDatabase.instance.ref("groups");
+
+  return StreamBuilder<DatabaseEvent>(
+    stream: groupsRef.onValue,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+        return _buildEmptyListView();
+      }
+
+      final value = snapshot.data!.snapshot.value;
+      final data = value is Map<dynamic, dynamic> ? value : <dynamic, dynamic>{};
+      final groups = <Map<String, dynamic>>[];
+
+      data.forEach((key, value) {
+        if (value is Map<dynamic, dynamic>) {
+          final group = Map<String, dynamic>.from(value);
+          final members = group["members"];
+          List<String> memberList = [];
+          if (members is Map<dynamic, dynamic>) {
+            memberList = members.keys.map((e) => e.toString()).toList();
+          } else if (members is List) {
+            memberList = members.map((e) => e.toString()).toList();
+          }
+          if (memberList.contains(_uid)) {
+            groups.add({"id": key, ...group});
+          }
         }
-        final groups = snapshot.data?.docs ?? const [];
+      });
 
-        if (groups.isEmpty) {
-          return _buildEmptyListView();
-        }
+      if (groups.isEmpty) {
+        return _buildEmptyListView();
+      }
 
-        return ListView(
-          children: [
-            ...groups.map((g) => _buildGroupTile(g)),
-          ],
-        );
-      },
-    );
-  }
+      return ListView(
+        children: [
+          ...groups.map((g) => _buildGroupTile(g)),
+        ],
+      );
+    },
+  );
+}
+
 
   Widget _buildEmptyListView() {
     return ListView(
@@ -288,68 +405,98 @@ class _ChatListScreenState extends State<ChatListScreen> with SingleTickerProvid
       ],
     );
   }
-
-  Widget _buildGroupTile(QueryDocumentSnapshot<Map<String, dynamic>> g) {
-    final data = g.data();
-    final grp = Group(
-      id: g.id,
-      name: (data['name'] ?? 'Group') as String,
-      members: List<String>.from(data['members'] ?? <String>[]),
-      isAuthor: false,
-    );
-    DateTime? lastTime;
-    final ts = data['lastMessageAt'];
-    if (ts is Timestamp) {
-      lastTime = ts.toDate();
-    }
-    final lastMsg = (data['lastMessage'] ?? '') as String;
-    return _GroupTile(
-      group: grp,
-      lastMessage: lastMsg.isEmpty ? null : lastMsg,
-      lastMessageTime: lastTime,
-      onTap: () async {
-        await Navigator.pushNamed(
-          context,
-          '/group_chat',
-          arguments: grp,
-        );
-      },
-    );
+Widget _buildGroupTile(Map<String, dynamic> g) {
+  List<String> memberList = [];
+  final members = g["members"];
+  if (members is Map<dynamic, dynamic>) {
+    memberList = members.keys.map((e) => e.toString()).toList();
+  } else if (members is List) {
+    memberList = members.map((e) => e.toString()).toList();
   }
 
-  Widget _buildDmTile(QueryDocumentSnapshot<Map<String, dynamic>> t) {
-    final data = t.data();
-    DateTime? lastTime;
-    final ts = data['lastMessageAt'];
-    if (ts is Timestamp) {
-      lastTime = ts.toDate();
-    }
-    final lastMsg = (data['lastMessage'] ?? '') as String;
-    final participants = List<String>.from(data['participants'] ?? <String>[]);
-    final otherUserId = participants.firstWhere((id) => id != _uid);
+  final grp = Group(
+    id: g["id"] as String,
+    name: (g["name"] ?? "Group") as String,
+    members: memberList,
+    isAuthor: false,
+  );
 
-    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
-      builder: (context, userSnapshot) {
-        String name = 'User';
-        if (userSnapshot.hasData) {
-          name = userSnapshot.data?.data()?['name'] ?? 'Agent';
-        }
-        return _GroupTile(
-          group: Group(id: t.id, name: name, members: participants, isAuthor: false),
-          lastMessage: lastMsg.isEmpty ? null : lastMsg,
-          lastMessageTime: lastTime,
-          onTap: () async {
-            await Navigator.pushNamed(
-              context,
-              '/chat',
-              arguments: t.id,
-            );
-          },
-        );
-      },
-    );
+  DateTime? lastTime;
+  final ts = g["lastMessageAt"];
+  if (ts is int) {
+    // RTDB usually stores timestamps as millisecondsSinceEpoch
+    lastTime = DateTime.fromMillisecondsSinceEpoch(ts);
   }
+
+  final lastMsg = (g["lastMessage"] ?? "") as String;
+
+  return _GroupTile(
+    group: grp,
+    lastMessage: lastMsg.isEmpty ? null : lastMsg,
+    lastMessageTime: lastTime,
+    onTap: () async {
+      await Navigator.pushNamed(
+        context,
+        "/group_chat",
+        arguments: grp,
+      );
+    },
+  );
+}
+
+Widget _buildDmTile(Map<String, dynamic> t) {
+  DateTime? lastTime;
+  final ts = t["lastMessageAt"];
+  if (ts is int) {
+    // RTDB stores timestamps as milliseconds since epoch
+    lastTime = DateTime.fromMillisecondsSinceEpoch(ts);
+  }
+
+  final lastMsg = (t["lastMessage"] ?? "") as String;
+
+  List<String> participantList = [];
+  final participants = t["participants"];
+  if (participants is Map<dynamic, dynamic>) {
+    participantList = participants.keys.map((e) => e.toString()).toList();
+  } else if (participants is List) {
+    participantList = participants.map((e) => e.toString()).toList();
+  }
+
+  final otherUserId = participantList.firstWhere((id) => id != _uid, orElse: () => "");
+
+  return FutureBuilder<DatabaseEvent>(
+    future: FirebaseDatabase.instance.ref("users/$otherUserId").once(),
+    builder: (context, userSnapshot) {
+      String name = "User";
+
+      if (userSnapshot.hasData && userSnapshot.data!.snapshot.value != null) {
+        final userData = Map<String, dynamic>.from(
+          userSnapshot.data!.snapshot.value as Map,
+        );
+        name = userData["name"] ?? "Agent";
+      }
+
+      return _GroupTile(
+        group: Group(
+          id: t["id"] as String, // we inject "id" earlier when parsing threads
+          name: name,
+          members: participantList,
+          isAuthor: false,
+        ),
+        lastMessage: lastMsg.isEmpty ? null : lastMsg,
+        lastMessageTime: lastTime,
+        onTap: () async {
+          await Navigator.pushNamed(
+            context,
+            "/chat",
+            arguments: t["id"],
+          );
+        },
+      );
+    },
+  );
+}
+
 }
 
 class _GroupTile extends StatelessWidget {

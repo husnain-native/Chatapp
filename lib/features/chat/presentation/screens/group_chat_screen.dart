@@ -277,65 +277,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  // void _promptAddMember() async {
-  //   final TextEditingController controller = TextEditingController();
-  //   final result = await showDialog<String>(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: const Text('Add member'),
-  //         content: TextField(
-  //           controller: controller,
-  //           decoration: const InputDecoration(hintText: 'Member name'),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context, controller.text.trim()),
-  //             child: const Text('Add'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  //   if (result != null && result.isNotEmpty) {
-  //     setState(() => widget.group.members.add(result));
-  //   }
-  // }
 
-  // void _promptRename() async {
-  //   final TextEditingController controller = TextEditingController(
-  //     text: widget.group.name,
-  //   );
-  //   final result = await showDialog<String>(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: const Text('Rename group'),
-  //         content: TextField(
-  //           controller: controller,
-  //           decoration: const InputDecoration(hintText: 'Group name'),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context, controller.text.trim()),
-  //             child: const Text('Save'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  //   if (result != null && result.isNotEmpty) {
-  //     setState(() => widget.group.name = result);
-  //   }
-  // }
 }
 
 class _GroupMessageBubble extends StatelessWidget {
