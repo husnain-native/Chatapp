@@ -398,27 +398,6 @@ class _PropertyExploreScreenState extends State<PropertyExploreScreen>
     );
   }
 
-  // Widget _buildPriceTabs() {
-  //   return Container(
-  //     height: 50.h,
-  //     margin: EdgeInsets.symmetric(vertical: 8.h),
-  //     child: TabBar(
-  //       controller: _priceController,
-  //       isScrollable: true,
-  //       labelColor: AppColors.primaryRed,
-  //       unselectedLabelColor: Colors.black87,
-  //       indicatorColor: AppColors.primaryRed,
-  //       tabs: const [
-  //         Tab(text: 'All Prices'),
-  //         Tab(text: '5M-10M'),
-  //         Tab(text: '10M-15M'),
-  //         Tab(text: '15M-20M'),
-  //         Tab(text: '20M+'),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildFilters() {
     return Container(
       height: 40.h,
